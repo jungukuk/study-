@@ -21,6 +21,11 @@ export const Definition: IDefinition = {
       expiresIn: "7d",
     },
   },
+  fileupload: {
+    imgDirname: process.env.FILE_IMGDIR!,
+    maxsize: process.env.FILE_MAXSIZE!,
+    description: process.env.FILE_MAXSIZE_DESC!,
+  },
   mysql: {
     name: process.env.MYSQL_NAME!,
     host: process.env.MYSQL_HOST!,

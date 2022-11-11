@@ -7,7 +7,11 @@ interface serverOption {
   modePro: string
   swagger: string
 }
-
+interface fileuploadOption {
+  imgDirname: string
+  maxsize: string
+  description: string
+}
 interface mysqlOption {
   name: string
   host: string
@@ -36,6 +40,7 @@ interface jwtOption {
 
 export interface IDefinition {
   server: serverOption
+  fileupload: fileuploadOption
   jwt: jwtOption
   mysql: mysqlOption
   redis: redisOption
