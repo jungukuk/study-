@@ -1,9 +1,8 @@
 export interface IUserAuth {
-  userIdx: number
-  userAuthority: string
+    userIdx: number;
 }
 
 export interface IDigitCode {
-  status: boolean
-  digitCode: number
+    status: boolean;
+    digitCode: number;
 }

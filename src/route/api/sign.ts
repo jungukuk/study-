@@ -1,15 +1,11 @@
-import express from "express"
+import { Definition } from "./../../config/definition";
+import express from "express";
+import signController from "src/controller/user/sign";
 
-import signController from "src/controller/user/sign"
-import { getDisitCode, setDisitCode } from "src/middleware/authHandler"
+const router = express.Router();
 
-const router = express.Router()
+router.post("/checkNick", signController.checkNick);
+router.post("/auth", signController.sendPhoneDisitCode);
+router.post("/up", signController.signUp);
 
-router.post("/in", signController.signin)
-
-router.post("/auth", getDisitCode, signController.checkDisitCode)
-router.post("/auth/phone", setDisitCode, signController.sendPhoneDisitCode)
-
-router.post("/up", signController.signUp)
-
-export default router
+export default router;

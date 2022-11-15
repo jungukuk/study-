@@ -1,135 +1,147 @@
-import { compareSync, genSaltSync, hashSync } from "bcrypt"
-import { StatusCodes } from "http-status-codes"
-import { IController } from "src/@interface/IController"
-import SignService from "src/service/user/sign"
-import redisService from "src/service/redis"
-import JWT from "src/utility/jwt"
-import ApiResponse from "src/utility/apiResponse"
-import ApiError from "src/utility/apiError"
+import { compareSync, genSaltSync, hashSync } from "bcrypt";
+import { StatusCodes } from "http-status-codes";
+import { IController } from "src/@interface/IController";
+import SignService from "src/service/user/sign";
+import redisService from "src/service/redis";
+import JWT from "src/utility/jwt";
+import ApiResponse from "src/utility/apiResponse";
+import ApiError from "src/utility/apiError";
+import nodemailer from "nodemailer";
 
 export default class signController {
-  /**
-   * 휴대폰 인증번호 보내기
-   */
-  static sendPhoneDisitCode: IController = async (req, res) => {
-    try {
-      const { redisKey: phone } = req.body
-      const { status, digitCode } = req.digitCode
+    /**
+     * 닉네임 중복 검사
+     */
+    static checkNick: IController = async (req, res) => {
+        try {
+            const { nickname } = req.body;
+            SignService.checkNick(nickname);
+            ApiResponse.init(res);
+        } catch (err: any) {
+            throw Error("err");
+        }
+    };
+    /**
+     * 이메일 인증번호 보내기
+     */
+    static sendPhoneDisitCode: IController = async (req, res) => {
+        try {
+            const { email } = req.body;
+            // const vaildCheck = email.indexOf("@");
+            // if (!email || email.length === 0 || vaildCheck === -1) {
+            //     throw Error('error');
+            // }
+            const transporter = nodemailer.createTransport({
+                service: "gmail",
+                host: "smtp.gmail.com",
+                port: 587,
+                secure: false,
+                auth: {
+                    user: "kinsng1599@gmail.com",
+                    pass: "byxnurxqihxpqzlh",
+                },
+            });
 
-      ApiResponse.init(res)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
+            await transporter.sendMail({
+                from: "ki141327612@gmail.com",
+                to: email,
+                subject: "이메일 인증",
+                text: "랜덤 숫자",
+            });
 
-  /**
-   * 인증번호 확인하기
-   */
-  static checkDisitCode: IController = async (req, res) => {
-    try {
-      const { digitCode } = req.body
-      const { status, digitCode: curDigitCode } = req.digitCode
+            ApiResponse.init(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-      ApiResponse.send(res, digitCode === curDigitCode)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
+    /**
+     * 이메일 인증번호 확인하기
+     */
+    static checkDisitCode: IController = async (req, res) => {
+        try {
+            const { digitCode } = req.body;
+            const { status, digitCode: curDigitCode } = req.digitCode;
 
-  /**
-   * 회원가입
-   */
-  static signUp: IController = async (req, res) => {
-    try {
-      const { carNumber, email, pwd, phone } = req.body
-      const salt = genSaltSync(10)
-      const enPwd = hashSync(pwd, salt)
-      const userInfo = { carNumber, email, pwd: enPwd, phone }
+            ApiResponse.send(res, digitCode === curDigitCode);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-      const result = await SignService.signUp(userInfo)
+    /**
+     * 회원가입
+     */
+    static signUp: IController = async (req, res) => {
+        try {
+            const { email, pwd } = req.body;
 
-      console.log(result)
-      ApiResponse.init(res)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
+            ApiResponse.init(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-  /**
-   * 로그인
-   */
-  static signin: IController = async (req, res) => {
-    try {
-      const { carNumber, pwd } = req.body
+    /**
+     * 로그인
+     * @return AccessToken, RefreshToken
+     */
+    static signin: IController = async (req, res) => {
+        try {
+            const { email, pwd } = req.body;
 
-      const userInfo = await SignService.signIn({ carNumber })
-      const { Pwd: userPwd, IDX_USER } = userInfo
+            // // token 반환
+            ApiResponse.send(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-      // 비밀번호 비교
-      if (!compareSync(pwd, userPwd)) {
-        throw new ApiError("LOGIN_WRONG_PASSWORD", StatusCodes.UNAUTHORIZED, `login : ${carNumber}, password mismatch`)
-      }
+    /**
+     * 회원 정보 조회
+     */
+    static userInfo: IController = async (req, res) => {
+        try {
+            ApiResponse.init(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-      // 토큰 생성 (access, refesh)
-      delete userInfo.Pwd
-      const act = JWT.createAccessToken(userInfo)
-      console.log("act:", act)
-      const rct = JWT.createRefreshToken({ IDX_USER })
-      console.log("rct:", rct)
-      // redis 토큰 저장
-      await redisService.setRefreshToken(rct, act)
+    /**
+     * 회원 정보 수정
+     */
+    static modifyInfo: IController = async (req, res) => {
+        try {
+            ApiResponse.init(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 
-      // // token 반환
-      ApiResponse.send(res, { rct, act })
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
-
-  /**
-   * 회원 정보 조회
-   */
-  static userInfo: IController = async (req, res) => {
-    try {
-      ApiResponse.init(res)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
-
-  /**
-   * 회원 정보 수정
-   */
-  static modifyInfo: IController = async (req, res) => {
-    try {
-      ApiResponse.init(res)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
-
-  /**
-   * 회원 패스워드 수정
-   */
-  static modifyPwd: IController = async (req, res) => {
-    try {
-      ApiResponse.init(res)
-    } catch (error: any) {
-      console.log(error)
-      ApiError.regist(error)
-      ApiResponse.error(res, error)
-    }
-  }
+    /**
+     * 회원 삭제
+     * 접근 권한은 없으나 실제 DB에는 데이터가 존재해야 합니다.
+     */
+    static removeUser: IController = async (req, res) => {
+        try {
+            ApiResponse.init(res);
+        } catch (error: any) {
+            console.log(error);
+            ApiError.regist(error);
+            ApiResponse.error(res, error);
+        }
+    };
 }
