@@ -9,6 +9,7 @@ import { logger, stream } from "src/config/logger";
 
 import indexRotuer from "src/route/index";
 import signRouter from "src/route/api/sign";
+import contentsRouter from "src/route/api/contents";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(morgan("combined", { stream }));
  */
 app.use("/", indexRotuer);
 app.use("/sign", signRouter);
+app.use("/contents", contentsRouter);
 
 /**
  * Swagger

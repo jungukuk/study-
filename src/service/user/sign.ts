@@ -25,21 +25,74 @@ const { name: dbName } = Definition.mysql;
  */
 export default class SignService {
     static checkNick = async (data: any) => {
-        const dml = "SELECT `Nickname`";
-        const model = "FROM `tbUser`";
-        const value = "WHERE `Nickname` = ?";
-        const sql = [dml, model, value].join(" ");
+        const sql =
+            "SELECT EXISTS (SELECT * FROM `tbUser` WHERE `Nickname` = ?) AS SUCCESS";
 
-        const nick = await DB.execute(dbName, sql, [data]);
-        console.log(nick);
-        return nick[0];
+        const result = await DB.execute(dbName, sql, [data.checkNick]);
+        return result[0];
     };
     static sendEmailDisitCode = async (data: any) => {};
     static checkDisitCode = async (data: any) => {};
 
-    static signUp = async (data: any) => {};
-    static signIn = async (data: any) => {};
-    static userInfo = async (data: any) => {};
-    static modifyInfo = async (data: any) => {};
-    static removeUser = async (data: any) => {};
+    static signUp = async (data: any) => {
+        const dml = "INSERT INTO `tbUser`";
+        const model = "(`Nickname`, `Email`, `Password`)";
+        const value = "VALUES (?,?,?)";
+        const sql = [dml, model, value].join(" ");
+
+        return await DB.execute(dbName, sql, [
+            data.nickname,
+            data.email,
+            data.pwd,
+        ]);
+    };
+    static signIn = async (data: any) => {
+        const dql = "SELECT `Id`, `Nickname`, `Email`, `Password`, `IsDeleted`";
+        const model = "FROM `tbUser`";
+        const value = "WHERE `Email` = ?";
+
+        const sql = [dql, model, value].join(" ");
+
+        const userinfo = await DB.execute(dbName, sql, [data.email]);
+        return userinfo[0];
+    };
+    static userInfo = async (data: any) => {
+        const dql =
+            "SELECT `Id`, `Nickname`, `Email`, `IsDeleted`, `Created_at`";
+        const model = "FROM `tbUser`";
+        const value = "WHERE `Id` = ?";
+
+        const sql = [dql, model, value].join(" ");
+
+        const userinfo = await DB.execute(dbName, sql, [data]);
+        return userinfo[0];
+    };
+    static modifyInfo = async (data: any) => {
+        const dml = "UPDATE `tbUser`";
+        let model = "SET `Nickname` = ?";
+        // model += "`Id` = ?,";
+        // model += "`Id` = ?";
+        const value = "WHERE `Id` = ?";
+        const sql = [dml, model, value].join(" ");
+
+        const userinfo = await DB.execute(dbName, sql, [
+            data.nickname,
+            data.userIdx,
+        ]);
+        return userinfo[0];
+    };
+    static removeUser = async (data: any) => {
+        const dml = "UPDATE `tbUser`";
+        let model = "SET `IsDeleted` = ?";
+        // model += "`Id` = ?,";
+        // model += "`Id` = ?";
+        const value = "WHERE `Id` = ?";
+        const sql = [dml, model, value].join(" ");
+
+        const userinfo = await DB.execute(dbName, sql, [
+            data.isDeleted,
+            data.userIdx,
+        ]);
+        return userinfo[0];
+    };
 }
